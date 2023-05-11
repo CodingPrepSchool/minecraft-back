@@ -34,3 +34,15 @@ def posts():
     return jsonify(response), 200
 
 # create post
+@app.route('/api/post', methods=["POST"])
+def create_post():
+    con = sqlite3.connect("minecraft.db")
+    cur = con.cursor()
+    post = request.json['post']
+    try:
+        cur.execute("INSERT INTO posts (post) VALUES (?)", (post,))
+    except sqlite3.Error as err:
+        con.commit()
+        con.close
+        print('Database error detected: ', err)
+        return jsonify({"error": "Database error"}), 500
