@@ -31,3 +31,26 @@ def show_posts():
     con.commit()
     con.close
     return jsonify(response), 200
+
+
+
+#Create post
+@app.route('/minecraft/create_post', methods=["POST"])
+def create_post():
+    # Try to insert to DB
+    con = sqlite3.connect("minecraft.db")
+    cur = con.cursor()
+    post = request.json['post']
+    print('Adding', post)
+    try:
+        cur.execute("INSERT INTO posts (post) VALUES (?)", (post,))
+    except sqlite3.Error as err:
+        con.commit()
+        con.close
+        print('Database error detected: ', err)
+        return jsonify({"error": "Database error"}), 500
+
+    # Return Successful Response
+    con.commit()
+    con.close
+    return jsonify({"status": "OK", "created_id": cur.lastrowid}), 201
