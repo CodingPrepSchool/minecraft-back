@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 import sqlite3
+import json
 
 app=Flask(__name__)
 app.config['SECRET_KEY'] = 'mysecret'
@@ -123,7 +124,7 @@ def create_tip():
     tip = request.json['tip']
     description = request.json['description']
     try:
-        cur.execute("INSERT INTO survival_tips (tip, description) VALUES (?)", (tip, description))
+        cur.execute("INSERT INTO survival_tips (tip, description) VALUES (?, ?)", (tip, description))
     except sqlite3.Error as err:
         con.commit()
         con.close
@@ -131,3 +132,26 @@ def create_tip():
     con.commit()
     con.close
     return jsonify({"status": "OK", "created_id": cur.lastrowid}), 201
+
+# edit recpie
+@app.route('/api/tips/edit/<int:id>', methods=["PUT"])
+def update_tip(id):
+    con = sqlite3.connect("minecraft1.db")
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+
+    tip_json = json.dumps(request.json['tip'])
+    description_json = json.dumps(request.json['description'])
+
+    try:
+        cur.execute("UPDATE survival_tips SET tip=?, description=? WHERE id=?", [tip_json, description_json, id])
+    except sqlite3.Error as err:
+        con.commit()
+        con.close
+        print('Database error detected: ', err)
+        return jsonify({"error": "Database error"}), 500
+
+    # Return Successful Response
+    con.commit()
+    con.close
+    return "OK", 201
