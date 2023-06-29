@@ -133,7 +133,31 @@ def create_tip():
     con.close
     return jsonify({"status": "OK", "created_id": cur.lastrowid}), 201
 
-# edit recpie
+#edit tips
+@app.route('/api/tips/edit/<int:id>', methods=["GET"])
+def edit_facts(id):
+    con = sqlite3.connect("minecraft1.db")
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+
+    try:
+        cur.execute("SELECT tip_id, tip, description FROM survival_tips where tip_id = ?", [id])
+    except sqlite3.Error as err:
+        con.commit()
+        con.close
+        print('Database error detected: ', err)
+        return jsonify({"error": "Database error"}), 500    
+    response = {}
+    for row in cur:
+        response = {
+            "tip_id": row['tip_id'],
+            "tip": row['tip'],
+            "description": row['description']
+        }
+    con.commit()
+    con.close
+    return response, 200
+
 @app.route('/api/tips/edit/<int:id>', methods=["PUT"])
 def update_tip(id):
     con = sqlite3.connect("minecraft1.db")
@@ -144,7 +168,7 @@ def update_tip(id):
     description_json = json.dumps(request.json['description'])
 
     try:
-        cur.execute("UPDATE survival_tips SET tip=?, description=? WHERE id=?", [tip_json, description_json, id])
+        cur.execute("UPDATE survival_tips SET tip=?, description=? WHERE tip_id=?", [tip_json, description_json, id])
     except sqlite3.Error as err:
         con.commit()
         con.close
